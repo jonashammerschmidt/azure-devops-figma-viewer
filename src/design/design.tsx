@@ -79,7 +79,7 @@ const Hub: React.FC<{}> = (props: any) => {
                     onReset: refreshDesigns,
                     onRefreshed: refreshDesigns,
                     onFieldChanged: async (args: { changedFields?: string[] }) => {
-                        if (!args.changedFields || args.changedFields.includes("System.Description")) {
+                        if (!args.changedFields || args.changedFields.indexOf("System.Description") !== -1) {
                             await refreshDesigns();
                         }
                     }
@@ -98,7 +98,7 @@ const Hub: React.FC<{}> = (props: any) => {
 
         setDesigns(urls);
         setItemProvider(new ArrayItemProvider(urls));
-        setSelectedItem((currentSelectedItem) => currentSelectedItem && urls.includes(currentSelectedItem) ? currentSelectedItem : (urls[0] ?? null));
+        setSelectedItem((currentSelectedItem) => currentSelectedItem && urls.indexOf(currentSelectedItem) !== -1 ? currentSelectedItem : (urls[0] ?? null));
     };
 
     const renderHeader = () => {
