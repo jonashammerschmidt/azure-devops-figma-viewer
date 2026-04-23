@@ -16,45 +16,89 @@ import React = require("react");
 import { ArrayItemProvider } from "azure-devops-ui/Utilities/Provider";
 
 
-const URL_REGEX = (/https:\/\/([\w\.-]+\.)?figma.com\/(file|proto)\/([0-9a-zA-Z]{22,128})(?:\/.*)?$/)
+const FIGMA_RESOURCE_TYPES = new Set(["file", "proto", "design"]);
+const RAW_URL_REGEX = /https:\/\/[^\s"'<>]+/g;
+
+const normalizeUrl = (value: string): string => value.replace(/[),.;!?]+$/, "");
+
+const isFigmaDesignUrl = (value: string): boolean => {
+    try {
+        const url = new URL(value);
+        const hostname = url.hostname.toLowerCase();
+
+        if (hostname !== "figma.com" && !hostname.endsWith(".figma.com")) {
+            return false;
+        }
+
+        const [resourceType, fileKey] = url.pathname.split("/").filter(Boolean);
+        return !!resourceType && FIGMA_RESOURCE_TYPES.has(resourceType) && !!fileKey;
+    } catch {
+        return false;
+    }
+};
+
+const extractFigmaUrls = (description: string | null | undefined): string[] => {
+    if (!description) {
+        return [];
+    }
+
+    const urls = new Set<string>();
+    const addUrl = (value: string | null | undefined): void => {
+        if (!value) {
+            return;
+        }
+
+        const normalizedUrl = normalizeUrl(value);
+        if (isFigmaDesignUrl(normalizedUrl)) {
+            urls.add(normalizedUrl);
+        }
+    };
+
+    const doc = new DOMParser().parseFromString(description, "text/html");
+    doc.querySelectorAll("a[href]").forEach((link) => addUrl(link.getAttribute("href")));
+
+    const rawUrls = description.match(RAW_URL_REGEX) ?? [];
+    rawUrls.forEach(addUrl);
+
+    return Array.from(urls);
+};
 
 const Hub: React.FC<{}> = (props: any) => {
     const [designs, setDesigns] = useState([] as string[]);
-    const [selectedItem, setSelectedItem] = useState(null as String | null);
+    const [selectedItem, setSelectedItem] = useState(null as string | null);
     const [selection] = React.useState(new ListSelection({ selectOnFocus: false }));
 
     const [itemProvider, setItemProvider] = React.useState(new ArrayItemProvider(designs));
 
     useEffect(() => {
         SDK.init().then(async () => {
-            await registerEvents();
+            SDK.register(SDK.getContributionId(), () => {
+                return {
+                    onLoaded: refreshDesigns,
+                    onSaved: refreshDesigns,
+                    onReset: refreshDesigns,
+                    onRefreshed: refreshDesigns,
+                    onFieldChanged: async (args: { changedFields?: string[] }) => {
+                        if (!args.changedFields || args.changedFields.includes("System.Description")) {
+                            await refreshDesigns();
+                        }
+                    }
+                };
+            });
+
+            await refreshDesigns();
+            SDK.notifyLoadSucceeded();
         });
     }, []);
 
-    const registerEvents = async () => {
-        var workItemFormService = await SDK.getService<IWorkItemFormService>(WorkItemTrackingServiceIds.WorkItemFormService);
-        var description = (await workItemFormService.getFieldValue("System.Description", ({} as WorkItemOptions)) as string);
-        var doc = document.createElement("html");
-        doc.innerHTML = description;
-        var links = doc.getElementsByTagName("a");
-        var urls = [] as string[];
-
-        for (var i = 0; i < links.length; i++) {
-            var url = links[i].getAttribute("href");
-
-            const match = url!.match(URL_REGEX)
-            if (match) {
-                urls.push(url!);
-            }
-        }
+    const refreshDesigns = async () => {
+        const workItemFormService = await SDK.getService<IWorkItemFormService>(WorkItemTrackingServiceIds.WorkItemFormService);
+        const description = (await workItemFormService.getFieldValue("System.Description", ({} as WorkItemOptions)) as string | null);
+        const urls = extractFigmaUrls(description);
 
         setDesigns(urls);
         setItemProvider(new ArrayItemProvider(urls));
-
-        console.log(selection);
-
-        console.log(urls);
-        console.log(selectedItem)
+        setSelectedItem((currentSelectedItem) => currentSelectedItem && urls.includes(currentSelectedItem) ? currentSelectedItem : (urls[0] ?? null));
     };
 
     const renderHeader = () => {
@@ -108,7 +152,7 @@ const Hub: React.FC<{}> = (props: any) => {
                         renderContent={() => renderContent(selection, itemProvider)}
                     />
                     {selectedItem != null ? <Page className="flex-grow single-layer-details">
-                        <iframe className="design-frame" src={`https://www.figma.com/embed?embed_host=azuredevops&url=${selectedItem}`} />
+                        <iframe className="design-frame" title="Figma design preview" src={`https://www.figma.com/embed?embed_host=azuredevops&url=${encodeURIComponent(selectedItem)}`} />
                     </Page> : <div></div>}
 
                 </div> :
