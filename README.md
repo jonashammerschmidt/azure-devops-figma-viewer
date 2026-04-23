@@ -1,6 +1,6 @@
-# Azure DevOps Embed Design
+# Azure DevOps Figma
 
-Azure DevOps Embed Design is a extension that allows users to seamlessly integrate their Figma designs into Azure DevOps. With this extension, designers can easily share their designs with the development team, who can then use the designs to build and implement the user interface for a project. This extension makes it possible for designers to embed their designs into Azure DevOps work items, allowing developers and designs to keep on the same page. Adding designs is as simple as adding a link into the description of the DevOps work item.
+Azure DevOps Figma is an extension that lets teams integrate Figma designs into Azure DevOps. Designers can share designs with the development team, and those designs show directly on Azure DevOps work items. Adding designs is as simple as adding a Figma link into the work item description.
 
 ## Running Locally for Development
 
@@ -27,7 +27,7 @@ webpack --mode development
 You will need to deploy your extension to the marketplace at least once using the following command:
 
 ```shell
-tfx extension publish --manifest-globs vss-extension.json --overrides-file configs/dev.json --token [token]
+tfx extension publish --manifest-globs vss-extension-dev.json --token [token]
 ```
 
 > The `[token]` here is an Azure DevOps PAT (personal access token) with the **Marketplace (Publish)** scope and access set to **All accessible organizations**. For more information, see [Authenticate access with personal access tokens](https://docs.microsoft.com/en-us/azure/devops/organizations/accounts/use-personal-access-tokens-to-authenticate).

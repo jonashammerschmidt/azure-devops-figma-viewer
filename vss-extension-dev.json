@@ -1,11 +1,18 @@
 {
   "manifestVersion": 1,
-  "version": "0.0.2",
-  "name": "Azure DevOps Figma",
-  "description": "Azure DevOps Figma lets teams view Figma designs directly inside Azure DevOps work items.",
+  "id": "azure-devops-figma-dev",
   "publisher": "JonasHammerschmidt",
-  "demands": ["api-version/3.0"],
-  "categories": ["Azure Repos"],
+  "version": "0.0.2",
+  "name": "Azure DevOps Figma (Dev)",
+  "description": "Azure DevOps Figma lets teams view Figma designs directly inside Azure DevOps work items.",
+  "public": false,
+  "baseUri": "https://localhost:3000",
+  "demands": [
+    "api-version/3.0"
+  ],
+  "categories": [
+    "Azure Repos"
+  ],
   "repository": {
     "type": "git",
     "uri": "https://github.com/jonashammerschmidt/azure-devops-figma-viewer"
@@ -33,19 +40,21 @@
       "addressable": true
     }
   ],
-  "scopes":[ "vso.work" ],
+  "scopes": [
+    "vso.work"
+  ],
   "contributions": [
-    {  
-        "id": "work-item-design-page",
-        "type": "ms.vss-work-web.work-item-form-page",
-        "description": "Design page for work items",
-        "targets": [
-            "ms.vss-work-web.work-item-form"
-        ],
-        "properties": {
-            "name": "Designs",
-            "uri": "dist/design/design.html"
-        } 
+    {
+      "id": "work-item-design-page",
+      "type": "ms.vss-work-web.work-item-form-page",
+      "description": "Design page for work items",
+      "targets": [
+        "ms.vss-work-web.work-item-form"
+      ],
+      "properties": {
+        "name": "Designs (Dev)",
+        "uri": "dist/design/design.html"
+      }
     }
-]
+  ]
 }
